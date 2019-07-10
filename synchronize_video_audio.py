@@ -1,9 +1,11 @@
-import subprocess
 from audio_offset_finder import find_offset
+import subprocess
 import argparse
 import tempfile
 import os
 import shutil
+import warnings
+
 
 def synchronize_video_audio(video_in, audio_in, video_out, find_offset_sample_rate=8000, verbose=False):
     temp_dir = tempfile.mkdtemp()
@@ -23,15 +25,18 @@ def synchronize_video_audio(video_in, audio_in, video_out, find_offset_sample_ra
 
     if score0 > score1:
         # internal audio starts later
-        ratio = score0 / score1
         offset = offset0 / find_offset_sample_rate
+        score = score0
     else:
         # external audio starts later
-        ratio = score1 / score0
         offset = -offset1 / find_offset_sample_rate
+        score = score1
+
+    if score < 10:
+        warnings.warn('Synchronization score is low ({:.1f})!'.format(score))
         
     if verbose:
-        print('score ratio {}, offset {} s'.format(ratio, offset))
+        print('score {}, offset {} s'.format(score, offset))
 
     command = ['ffmpeg', '-i', video_in, '-itsoffset', str(offset), '-i', audio_in, '-map', '0:v', '-map', '1:0', '-vcodec', 'copy', video_out, '-loglevel']
     if verbose:
@@ -39,6 +44,7 @@ def synchronize_video_audio(video_in, audio_in, video_out, find_offset_sample_ra
     else:
         command.append('warning')
     subprocess.check_output(command)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
