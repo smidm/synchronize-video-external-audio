@@ -23,18 +23,18 @@ def synchronize_video_audio(video_in, audio_in, video_out,
         command.append('warning')
     subprocess.check_output(command)
 
-    #                            offset of                within
+    #                             within                    find offset of
     offset0, score0 = find_offset(extracted_audio_filename, audio_in, find_offset_sample_rate)
     offset1, score1 = find_offset(audio_in, extracted_audio_filename, find_offset_sample_rate)
 
     shutil.rmtree(temp_dir) 
 
     if score0 > score1:
-        # internal audio starts later
+        # external audio starts later
         offset = offset0 / find_offset_sample_rate
         score = score0
     else:
-        # external audio starts later
+        # internal audio starts later
         offset = -offset1 / find_offset_sample_rate
         score = score1
 
@@ -42,7 +42,7 @@ def synchronize_video_audio(video_in, audio_in, video_out,
         warnings.warn('Synchronization score is low ({:.1f})!'.format(score))
         
     if verbose or video_out is None:
-        print('offset of video file audio within external audio: {} s, score: {}'.format(offset, score))
+        print('offset of the external audio within the video audio: {} s, score: {}'.format(offset, score))
 
     if video_out is not None:
         if include_original_audio:
